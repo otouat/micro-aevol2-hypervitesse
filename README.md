@@ -1,4 +1,6 @@
-# Mini-Aevol : A mini-application based on the Aevol simulator
+# Mini-Aevol-Hypervitesse : A mini-application based on the Aevol simulator
+
+THIS IS A FORK WANNABE
 
 A reduced version (from a model and implementation point of view) of Aevol.
 
