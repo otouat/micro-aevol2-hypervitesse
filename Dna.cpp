@@ -27,10 +27,11 @@ void Dna::load(gzFile backup_file) {
     int dna_length;
     gzread(backup_file, &dna_length, sizeof(dna_length));
 
-    char tmp_seq[dna_length];
-    gzread(backup_file, tmp_seq, dna_length * sizeof(tmp_seq[0]));
+    std::vector<char> tmp_seq;
+    tmp_seq.reserve(dna_length);
+    gzread(backup_file, tmp_seq.data(), dna_length * sizeof(tmp_seq[0]));
 
-    seq_ = std::vector<char>(tmp_seq, tmp_seq + dna_length);
+    seq_ = std::vector<char>(tmp_seq.data(), tmp_seq.data() + dna_length);
 }
 
 void Dna::set(int pos, char c) {

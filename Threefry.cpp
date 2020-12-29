@@ -2,6 +2,10 @@
 
 #include <cmath>
 
+#ifndef M_PI
+#   define M_PI 3.14159265358979323846
+#endif
+
 void Threefry::save(gzFile backup_file) const {
   Threefry123::key_type::value_type seed = seed_[1];
   gzwrite(backup_file, &seed, sizeof(seed));
@@ -16,10 +20,12 @@ Threefry::Threefry(int X, int Y, gzFile backup_file)
   seed_[0] = 0;
   seed_[1] = seed;
 
-  crt_value_type tmp_counters[counters_.size()];
-  gzread(backup_file, tmp_counters, counters_.size() * sizeof(tmp_counters[0]));
+  // TODO ensure it is correct (Martin bugfix)
+  std::vector<crt_value_type> tmp_counters_v;
+  tmp_counters_v.reserve(counters_.size());
+  gzread(backup_file, tmp_counters_v.data(), counters_.size() * sizeof(tmp_counters_v[0]));
 
-  counters_ = std::vector<crt_value_type>(tmp_counters, tmp_counters + counters_.size());
+  counters_ = std::vector<crt_value_type>(tmp_counters_v.data(), tmp_counters_v.data() + counters_.capacity());
 }
 
 int32_t Threefry::Gen::roulette_random(double* probs, int32_t nb_elts, bool verbose )

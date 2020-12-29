@@ -27,7 +27,7 @@
 
 
 #include <iostream>
-#include <getopt.h>
+#include "include_helpers/getopt.h"
 #include <cstring>
 
 #ifdef USE_CUDA

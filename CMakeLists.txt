@@ -28,6 +28,9 @@ if ( USE_OMP )
     find_package(OpenMP REQUIRED)
 endif ( USE_OMP )
 
+if (WIN32)
+    set(ZLIB_ROOT extlibs/zlib)
+endif()
 find_package(ZLIB REQUIRED)
 
 add_library(micro_aevol
@@ -39,7 +42,8 @@ add_library(micro_aevol
         Organism.cpp
         Stats.cpp
         Threefry.cpp
-        Dna.cpp)
+        Dna.cpp
+        include_helpers/getopt.c)
 
 target_link_libraries(micro_aevol PUBLIC ZLIB::ZLIB)
 
