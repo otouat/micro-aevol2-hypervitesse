@@ -2,3 +2,5 @@
 *build*
 
 experiments/
+/venv/
+/Benchmarking/**/*.csv
