@@ -2,6 +2,7 @@ import numpy as np
 import pandas
 from pathlib import Path, PurePath
 import subprocess
+from typing import *
 
 
 CURRENT_FOLDER = Path().absolute()  # Current folder
@@ -71,9 +72,13 @@ def first_checks():
     Raises exceptions if anything is not ready.
     """
 
+    print("FIRST CHECKS ----- STARTING.")
+
     # Ensure that the process can be run.
     assert EXEC_FILE.exists()
     call_program(just_help=True, timeout=.1)
+
+    print("Program can be called.")
 
     # Remove the CSV files if already existing to ensure that we will create new ones.
     TRACE_CSV_FILE.unlink(missing_ok=True)
@@ -101,6 +106,8 @@ def first_checks():
         assert np.issubdtype(int, type(current_duration))  # Ensure that it is an int
         assert current_duration  # Ensure not zero
 
+    print("Trace.csv file is OK.")
+
     # Check stats files
     assert STATS_BEST_CSV_FILE.exists()
     best_csv = pandas.read_csv(STATS_BEST_CSV_FILE)
@@ -110,11 +117,66 @@ def first_checks():
     mean_csv = pandas.read_csv(STATS_MEAN_CSV_FILE)
     assert mean_csv.shape == (FIRST_CHECKS_NBR_STEPS, 10)
 
+    print("Stats CSV files are OK.")
+
+    print("FIRST CHECKS ----- OK.")
+
+
+def test_if_stats_are_deterministic() -> bool:
+    """
+    This function runs the program several time with the same arguments and compares the stats CSV files.
+    It is made using different seeds to ensure no random stuff falsified our result.
+    It outputs the conclusion.
+    :return: True if deterministic, false otherwise.
+    """
+    NBR_STEPS = 25
+    WIDTH = 10
+    HEIGHT = 10
+    GENOME_SIZE = 100
+    MUTATION_RATE = 0.1234
+
+    seeds = [1, 99999, 456]
+
+    try:
+
+        for seed in seeds:
+            print(f"Testing with seed={seed}.")
+
+            best_csv: List[pandas.DataFrame] = []
+            mean_csv: List[pandas.DataFrame] = []
+
+            for i in range(3):
+                print(f"Run #{i}.")
+                call_program(
+                    nbr=NBR_STEPS,
+                    width=WIDTH,
+                    height=HEIGHT,
+                    mutation_rate=MUTATION_RATE,
+                    genome_size=GENOME_SIZE,
+                    seed=seed
+                )
+                best_csv.append(pandas.read_csv(STATS_BEST_CSV_FILE))
+                mean_csv.append(pandas.read_csv(STATS_MEAN_CSV_FILE))
+
+            assert best_csv[0].equals(best_csv[1])
+            assert best_csv[0].equals(best_csv[2])
+            assert mean_csv[0].equals(mean_csv[1])
+            assert mean_csv[0].equals(mean_csv[2])
+
+        print("Conclusion: program runs are deterministic if we only look at statistics CSV files.")
+        print("In other words, calling the program with the same arguments will produce the exact same results.")
+        return True
+
+    except AssertionError:
+        print("Conclusion: program runs are non-deterministic if we only look at statistics CSV files.")
+        print("In other words, calling the program with the same arguments will produce different results.")
+        return False
 
 def main():
     # First we ensure that all is okay.
     # So that no error will happen during the real script.
     first_checks()
+    test_if_stats_are_deterministic()
 
     # TODO
 
