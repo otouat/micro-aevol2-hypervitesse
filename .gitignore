@@ -4,3 +4,4 @@
 experiments/
 /venv/
 /Benchmarking/**/*.csv
+**.png
