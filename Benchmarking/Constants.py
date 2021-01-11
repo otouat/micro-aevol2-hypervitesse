@@ -1,0 +1,27 @@
+from pathlib import Path
+
+
+CURRENT_FOLDER = Path().absolute()  # Current folder
+PROJECT_HOME_FOLDER = CURRENT_FOLDER.parent  # Project root folder
+EXEC_FILE = PROJECT_HOME_FOLDER / "cmake-build-debug" / "micro_aevol_cpu"
+TRACE_CSV_FILE = CURRENT_FOLDER / "trace.csv"
+STATS_BEST_CSV_FILE = CURRENT_FOLDER / "stats" / "stats_simd_best.csv"
+STATS_MEAN_CSV_FILE = CURRENT_FOLDER / "stats" / "stats_simd_mean.csv"
+
+FIXED_SEED = 42  # Always give that seed to the program.
+FIRST_CHECKS_NBR_STEPS = 3
+DEFAULT_WIDTH = 32
+DEFAULT_HEIGHT = 32
+DEFAULT_MUTATION_RATE = 0.00001
+DEFAULT_NB_STEPS = 1000
+DEFAULT_GENOME_SIZE = 5000
+
+assert DEFAULT_MUTATION_RATE == 1e-5
+
+QUICK_RUNS_GENOME_SIZE = 500
+QUICK_RUNS_NB_STEPS = 200
+QUICK_RUNS_WIDTH = 16
+QUICK_RUNS_HEIGHT = 16
+QUICK_RUNS_MUTATION_RATE = 1e-8
+
+TIME_FUNCTIONS_NUMBER_REPETITIONS = 3
