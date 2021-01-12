@@ -341,6 +341,8 @@ void ExpManager::selection(int indiv_id) const {
  * @param indiv_id : Organism unique id
  */
 void ExpManager::prepare_mutation(int indiv_id) const {
+    index_of_organisms_which_has_mutated.clear();
+
     auto *rng = new Threefry::Gen(std::move(rng_->gen(indiv_id, Threefry::MUTATION)));
     const shared_ptr<Organism> &parent = prev_internal_organisms_[next_generation_reproducer_[indiv_id]];
     dna_mutator_array_[indiv_id] = new DnaMutator(
@@ -351,6 +353,10 @@ void ExpManager::prepare_mutation(int indiv_id) const {
 
     if (dna_mutator_array_[indiv_id]->hasMutate()) {
         internal_organisms_[indiv_id] = std::make_shared<Organism>(parent);
+#if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
+#pragma omp critical
+        index_of_organisms_which_has_mutated.push_back(indiv_id);
+#endif
     } else {
         int parent_id = next_generation_reproducer_[indiv_id];
 
@@ -399,10 +405,18 @@ void ExpManager::run_a_step() {
     stats_best->reinit(AeTime::time());
     stats_mean->reinit(AeTime::time());
 
+#if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < index_of_organisms_which_has_mutated.size(); i++) {
+        prev_internal_organisms_[index_of_organisms_which_has_mutated[i]]->compute_protein_stats();
+    }
+#else
+#pragma omp parallel for
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
         if (dna_mutator_array_[indiv_id]->hasMutate())
             prev_internal_organisms_[indiv_id]->compute_protein_stats();
     }
+#endif
 
     stats_best->write_best(best_indiv);
     stats_mean->write_average(prev_internal_organisms_, nb_indivs_);
@@ -418,11 +432,7 @@ void ExpManager::run_evolution(int nb_gen) {
     INIT_TRACER("trace.csv", {"FirstEvaluation", "STEP"});
 
     TIMESTAMP(0, {
-        for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
-            internal_organisms_[indiv_id]->locate_promoters();
-            prev_internal_organisms_[indiv_id]->evaluate(target);
-            prev_internal_organisms_[indiv_id]->compute_protein_stats();
-        }
+        do_first_evaluation();
     });
     FLUSH_TRACES(0)
 
@@ -451,4 +461,14 @@ void ExpManager::run_evolution(int nb_gen) {
         }
     }
     STOP_TRACER
+}
+
+
+void ExpManager::do_first_evaluation() {
+#pragma omp parallel for
+    for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
+        internal_organisms_[indiv_id]->locate_promoters();
+        prev_internal_organisms_[indiv_id]->evaluate(target);
+        prev_internal_organisms_[indiv_id]->compute_protein_stats();
+    }
 }

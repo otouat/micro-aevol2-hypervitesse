@@ -186,13 +186,33 @@ def time_genome_sizes():
     make_stats_diagram("genome_size", "Size of the genome", sizes, first_evals, step_means)
 
 
+def time_normal_run():
+    """
+    Simply runs with default parameters and outputs statistics about several runs.
+    """
+
+    first_evals: List[int] = []
+    steps: List[int] = []
+
+    for _ in range(20):
+        call_program()
+        l_traces = read_traces()
+        first_evals.append(int(l_traces.duration_first_eval / 1e3))
+        for value in l_traces.duration_steps:
+            steps.append(int(value / 1e3))
+
+    print(f"Mean 'first_evaluation' = {np.mean(first_evals)}")
+    print(f"Mean 'step' = {np.mean(steps)}")
+
+
 def main():
     # First we ensure that all is okay.
     # So that no error will happen during the real script.
     first_checks()
-    test_if_stats_are_deterministic()
+    # test_if_stats_are_deterministic()
     # time_different_grid_sizes()
-    time_genome_sizes()
+    # time_genome_sizes()
+    time_normal_run()
 
     # TODO
 

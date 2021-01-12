@@ -64,6 +64,8 @@ private:
 
     void selection(int indiv_id) const;
 
+    void do_first_evaluation();
+
     std::shared_ptr<Organism> *internal_organisms_;
     std::shared_ptr<Organism> *prev_internal_organisms_;
     std::shared_ptr<Organism> best_indiv;
@@ -87,4 +89,6 @@ private:
     double mutation_rate_;
 
     int backup_step_;
+
+    mutable std::vector<std::size_t> index_of_organisms_which_has_mutated;
 };
