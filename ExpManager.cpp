@@ -345,7 +345,6 @@ void ExpManager::selection(int indiv_id) const {
  * @param indiv_id : Organism unique id
  */
 void ExpManager::prepare_mutation(int indiv_id) const {
-    index_of_organisms_which_has_mutated.clear();
 
     auto *rng = new Threefry::Gen(std::move(rng_->gen(indiv_id, Threefry::MUTATION)));
     const shared_ptr<Organism> &parent = prev_internal_organisms_[next_generation_reproducer_[indiv_id]];
@@ -374,6 +373,7 @@ void ExpManager::prepare_mutation(int indiv_id) const {
  *
  */
 void ExpManager::run_a_step() {
+    index_of_organisms_which_has_mutated.clear();
 
     // Running the simulation process for each organism
 #pragma omp parallel for
@@ -389,6 +389,7 @@ void ExpManager::run_a_step() {
     }
 
     // Swap Population
+#pragma omp parallel for
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
         prev_internal_organisms_[indiv_id] = internal_organisms_[indiv_id];
         internal_organisms_[indiv_id] = nullptr;
@@ -433,21 +434,21 @@ void ExpManager::run_a_step() {
  * @param nb_gen : Number of generations to simulate
  */
 void ExpManager::run_evolution(int nb_gen) {
-    INIT_TRACER("trace.csv", {"FirstEvaluation", "STEP"});
-
-    TIMESTAMP(0, {
-        do_first_evaluation();
-    });
-    FLUSH_TRACES(0)
-
-    // Stats
-    stats_best = new Stats(AeTime::time(), true);
-    stats_mean = new Stats(AeTime::time(), false);
-
-    printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
-
 #pragma omp target teams
     {
+        INIT_TRACER("trace.csv", {"FirstEvaluation", "STEP"});
+
+        TIMESTAMP(0, {
+            do_first_evaluation();
+        });
+        FLUSH_TRACES(0)
+
+        // Stats
+        stats_best = new Stats(AeTime::time(), true);
+        stats_mean = new Stats(AeTime::time(), false);
+
+        printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
+
         for (int gen = 0; gen < nb_gen; gen++) {
             AeTime::plusplus();
 
@@ -467,8 +468,8 @@ void ExpManager::run_evolution(int nb_gen) {
                 //cout << "Backup for generation " << AeTime::time() << " done !" << endl;
             }
         }
+        STOP_TRACER
     }
-    STOP_TRACER
 }
 
 
