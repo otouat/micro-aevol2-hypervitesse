@@ -38,6 +38,10 @@ using namespace std;
 // For time tracing
 #include "Timetracer.h"
 
+
+// Enable optimizations
+#define PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS 1
+
 /**
  * Constructor for initializing a new simulation
  *
@@ -442,22 +446,26 @@ void ExpManager::run_evolution(int nb_gen) {
 
     printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
 
-    for (int gen = 0; gen < nb_gen; gen++) {
-        AeTime::plusplus();
+#pragma omp target teams
+    {
+        for (int gen = 0; gen < nb_gen; gen++) {
+            AeTime::plusplus();
 
-        TIMESTAMP(1, run_a_step();)
+            TIMESTAMP(1, run_a_step();)
 
-        printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
-        FLUSH_TRACES(gen)
+            printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
+            FLUSH_TRACES(gen)
 
-        for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
-            delete dna_mutator_array_[indiv_id];
-            dna_mutator_array_[indiv_id] = nullptr;
-        }
+            for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
+                delete dna_mutator_array_[indiv_id];
+                dna_mutator_array_[indiv_id] = nullptr;
+            }
 
-        if (AeTime::time() % backup_step_ == 0) {
-            save(AeTime::time());
-            cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+            if (AeTime::time() % backup_step_ == 0) {
+                save(AeTime::time());
+                printf("Backup for generation %ud done!\n", AeTime::time());
+                //cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+            }
         }
     }
     STOP_TRACER
