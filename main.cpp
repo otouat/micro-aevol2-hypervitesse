@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
     printf("Activate CUDA\n");
 #endif
 
-    printf("Start ExpManager\n");
+    // printf("Start ExpManager\n");
 
     if (resume >= 0) {
         if ((width != -1) || (height != -1)|| (mutation_rate != -1.0) || (genome_size != -1) ||
