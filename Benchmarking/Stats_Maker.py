@@ -1,5 +1,7 @@
 from typing import *
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import linregress
 
 
 def make_stats_file(
@@ -65,3 +67,9 @@ def make_stats_diagram(
     fig.tight_layout()
 
     plt.savefig(f"{filename}.png")
+
+
+def make_lin_regression(x, y, field_description: str):
+    slope = linregress(x, y).slope
+    r2 = np.corrcoef(x, y)[0, 1] ** 2  # https://stackoverflow.com/a/34617603 : this method seems accurate and fast.
+    print(f"The linear regression for {field_description} gives slope={slope:.3f} and R2={r2:.3f}")
