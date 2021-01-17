@@ -8,7 +8,7 @@ option(USE_OMP "Whether to enable OpenMP parallelization" ON)
 option(USE_CUDA "Whether to enable CUDA parallelization" OFF)
 
 if ( DO_TRACES )
-    add_definitions(-DTRACES)
+    add_compile_definitions(TRACES)
     message( STATUS "Traces are activated" )
 endif ( DO_TRACES )
 
