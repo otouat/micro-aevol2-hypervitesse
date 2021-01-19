@@ -380,13 +380,10 @@ void ExpManager::prepare_mutation(int indiv_id) const {
  *
  */
 void ExpManager::run_a_step() {
-#pragma omp master
-    {
-        index_of_organisms_which_has_mutated.clear();
-    }
+    index_of_organisms_which_has_mutated.clear();
 
     // Running the simulation process for each organism
-#pragma omp for
+#pragma omp parallel for
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
         selection(indiv_id);
         prepare_mutation(indiv_id);
@@ -399,48 +396,42 @@ void ExpManager::run_a_step() {
     }
 
     // Swap Population
-#pragma omp for
+#pragma omp parallel for
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
         prev_internal_organisms_[indiv_id] = internal_organisms_[indiv_id];
         internal_organisms_[indiv_id] = nullptr;
     }
 
-#pragma omp master
-    {
-        // Search for the best
-        double best_fitness = prev_internal_organisms_[0]->fitness;
-        int idx_best = 0;
-        for (int indiv_id = 1; indiv_id < nb_indivs_; indiv_id++) {
-            if (prev_internal_organisms_[indiv_id]->fitness > best_fitness) {
-                idx_best = indiv_id;
-                best_fitness = prev_internal_organisms_[indiv_id]->fitness;
-            }
+    // Search for the best
+    double best_fitness = prev_internal_organisms_[0]->fitness;
+    int idx_best = 0;
+    for (int indiv_id = 1; indiv_id < nb_indivs_; indiv_id++) {
+        if (prev_internal_organisms_[indiv_id]->fitness > best_fitness) {
+            idx_best = indiv_id;
+            best_fitness = prev_internal_organisms_[indiv_id]->fitness;
         }
-        best_indiv = prev_internal_organisms_[idx_best];
-
-        // Stats
-        stats_best->reinit(AeTime::time());
-        stats_mean->reinit(AeTime::time());
     }
+    best_indiv = prev_internal_organisms_[idx_best];
+
+    // Stats
+    stats_best->reinit(AeTime::time());
+    stats_mean->reinit(AeTime::time());
 
 #if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
-#pragma omp for
+#pragma omp parallel for
     for (std::size_t i = 0; i < index_of_organisms_which_has_mutated.size(); i++) {
         prev_internal_organisms_[index_of_organisms_which_has_mutated[i]]->compute_protein_stats();
     }
 #else
-#pragma omp for
+#pragma omp parallel for
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
         if (dna_mutator_array_[indiv_id]->hasMutate())
             prev_internal_organisms_[indiv_id]->compute_protein_stats();
     }
 #endif
 
-#pragma omp master
-    {
-        stats_best->write_best(best_indiv);
-        stats_mean->write_average(prev_internal_organisms_, nb_indivs_);
-    }
+    stats_best->write_best(best_indiv);
+    stats_mean->write_average(prev_internal_organisms_, nb_indivs_);
 }
 
 
@@ -451,84 +442,58 @@ void ExpManager::run_a_step() {
  */
 void ExpManager::run_evolution(int nb_gen) {
     std::list<std::size_t> sizesOfMutatedOrganismsLists;
-#pragma omp parallel
-    {
-#pragma omp master
-        {
-            INIT_TRACER("trace.csv", { "FirstEvaluation", "STEP" });
+    INIT_TRACER("trace.csv", { "FirstEvaluation", "STEP" });
+    TIMESTAMP(0, do_first_evaluation(););
+    FLUSH_TRACES(0)
 
-#ifdef TRACES
-            time_tracer::timestamp_start();
-#endif
-        }
-        do_first_evaluation();
-
-#pragma omp master
-        {
-#ifdef TRACES
-            time_tracer::timestamp_end(0);
-#endif
-
-            FLUSH_TRACES(0)
-
-            // Stats
-            stats_best = new Stats(AeTime::time(), true);
-            stats_mean = new Stats(AeTime::time(), false);
+    // Stats
+    stats_best = new Stats(AeTime::time(), true);
+    stats_mean = new Stats(AeTime::time(), false);
 
 #if ENABLE_STDOUT
-            printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
+    printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
 #endif
-        }
 
-        for (int gen = 0; gen < nb_gen; gen++) {
-#pragma omp master
-            {
-                AeTime::plusplus();
-#ifdef TRACES
-                time_tracer::timestamp_start();
-#endif
-            }
-
-            run_a_step();
-
-#pragma omp master
-            {
-#ifdef TRACES
-                time_tracer::timestamp_end(1);
-#endif
-                sizesOfMutatedOrganismsLists.push_back(index_of_organisms_which_has_mutated.size());
-
+    for (int gen = 0; gen < nb_gen; gen++) {
+        AeTime::plusplus();
+        TIMESTAMP(1, run_a_step(););
+        sizesOfMutatedOrganismsLists.push_back(index_of_organisms_which_has_mutated.size());
 #if ENABLE_STDOUT
-                printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
+        printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
 #endif
-                FLUSH_TRACES(gen)
+        FLUSH_TRACES(gen)
 
-                for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
-                    delete dna_mutator_array_[indiv_id];
-                    dna_mutator_array_[indiv_id] = nullptr;
-                }
+        for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
+            delete dna_mutator_array_[indiv_id];
+            dna_mutator_array_[indiv_id] = nullptr;
+        }
 
-                if (AeTime::time() % backup_step_ == 0) {
-                    save(AeTime::time());
+        if (AeTime::time() % backup_step_ == 0) {
+            save(AeTime::time());
 #if ENABLE_STDOUT
-                    printf("Backup for generation %ud done!\n", AeTime::time());
+        printf("Backup for generation %ud done!\n", AeTime::time());
 #endif
-                }
-            }
         }
-#pragma omp master
-        {
-            printf("%f\n",
-                   float(std::accumulate(sizesOfMutatedOrganismsLists.cbegin(), sizesOfMutatedOrganismsLists.cend(),
-                                         0)) / float(sizesOfMutatedOrganismsLists.size()));
-            STOP_TRACER
-        }
+
+
     }
+    printf(
+            "%f\n",
+            float(
+                std::accumulate(
+                    sizesOfMutatedOrganismsLists.cbegin(),
+                    sizesOfMutatedOrganismsLists.cend(),
+                    0
+                )
+            )
+            /
+            float(sizesOfMutatedOrganismsLists.size()));
+    STOP_TRACER
 }
 
 
 void ExpManager::do_first_evaluation() {
-#pragma omp for
+#pragma omp parallel for
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
         internal_organisms_[indiv_id]->locate_promoters();
         prev_internal_organisms_[indiv_id]->evaluate(target);
