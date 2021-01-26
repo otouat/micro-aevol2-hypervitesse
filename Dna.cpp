@@ -124,6 +124,18 @@ void Dna::do_duplication(int pos_1, int pos_2, int pos_3) {
 }
 
 int Dna::promoter_at(int pos) {
+#if PROJECT_ENHANCE_METHODS_AT
+    int dist_lead = 0;
+    for (int motif_id = 0; motif_id < PROM_SIZE; motif_id++) {
+        int search_pos = pos + motif_id;
+        if (search_pos >= seq_.size())
+            search_pos -= seq_.size();
+        // Searching for the promoter
+        if (PROM_SEQ[motif_id] != seq_[search_pos]) {
+            dist_lead += 1;
+        }
+    }
+#else
     int prom_dist[PROM_SIZE];
 
     for (int motif_id = 0; motif_id < PROM_SIZE; motif_id++) {
@@ -160,13 +172,29 @@ int Dna::promoter_at(int pos) {
                     prom_dist[19] +
                     prom_dist[20] +
                     prom_dist[21];
-
+#endif
     return dist_lead;
 }
 
 // Given a, b, c, d boolean variable and X random boolean variable,
 // a terminator look like : a b c d X X !d !c !b !a
 int Dna::terminator_at(int pos) {
+#if PROJECT_ENHANCE_METHODS_AT
+    int dist_term_lead = 0;
+    for (int motif_id = 0; motif_id < TERM_STEM_SIZE; motif_id++) {
+        int right = pos + motif_id;
+        int left = pos + (TERM_SIZE - 1) - motif_id;
+
+        // loop back the dna inf needed
+        if (right >= length()) right -= length();
+        if (left >= length()) left -= length();
+
+        // Search for the terminators
+        if (seq_[right] != seq_[left]) {
+            dist_term_lead += 1;
+        }
+    }
+#else
     int term_dist[TERM_STEM_SIZE];
     for (int motif_id = 0; motif_id < TERM_STEM_SIZE; motif_id++) {
         int right = pos + motif_id;
@@ -183,7 +211,7 @@ int Dna::terminator_at(int pos) {
                          term_dist[1] +
                          term_dist[2] +
                          term_dist[3];
-
+#endif
     return dist_term_lead;
 }
 

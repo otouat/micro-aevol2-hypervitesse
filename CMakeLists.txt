@@ -7,6 +7,13 @@ option(DO_TRACES "Whether to enable the Traces library" ON)
 option(USE_OMP "Whether to enable OpenMP parallelization" ON)
 option(USE_CUDA "Whether to enable CUDA parallelization" OFF)
 
+add_compile_definitions(
+        PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS=1
+        PROJECT_ENABLE_STDOUT=0
+        PROJECT_USE_REMAINDER_FOR_MODULO=1
+        PROJECT_ENHANCE_METHODS_AT=1
+)
+
 if ( DO_TRACES )
     add_compile_definitions(TRACES)
     message( STATUS "Traces are activated" )

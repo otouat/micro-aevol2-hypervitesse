@@ -32,12 +32,15 @@
 #include <zlib.h>
 #include <list>
 #include <cstdint>
+#include <cmath>
 
 #include "RNA.h"
 #include "Protein.h"
 #include "Dna.h"
 #include "MutationEvent.h"
 #include "aevol_constants.h"
+
+#define PROJECT_USE_REMAINDER_FOR_MODULO 1
 
 /**
  * Class that implements an organism and its related DNAs, RNAs, Protein and Phenotype
@@ -140,9 +143,13 @@ private:
 
         assert(b > 0);
 
+#if PROJECT_USE_REMAINDER_FOR_MODULO
+        a = std::remainder(a, b);
+        if (a < 0) { a += b; }
+#else
         while (a < 0) a += b;
         while (a >= b) a -= b;
-
+#endif
         return a;
         //return m >= 0 ? m % n : ( n - abs ( m%n ) ) % n;
     }
@@ -151,8 +158,13 @@ private:
 
         assert(b > 0);
 
+#if PROJECT_USE_REMAINDER_FOR_MODULO
+        a = std::remainder(a, b);
+        if (a < 0) { a += b; }
+#else
         while (a < 0) a += b;
         while (a >= b) a -= b;
+#endif
 
         return a;
         //return m >= 0 ? m % n : ( n - abs ( m%n ) ) % n;

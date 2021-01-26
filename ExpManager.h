@@ -90,5 +90,7 @@ private:
 
     int backup_step_;
 
+#if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
     mutable std::vector<std::size_t> index_of_organisms_which_has_mutated;
+#endif
 };
