@@ -97,7 +97,9 @@ ExpManager::ExpManager(int grid_height, int grid_width, int seed, double mutatio
         geometric_area += ((fabs(target[i]) + fabs(target[i + 1])) / (2 * (double) FUZZY_SAMPLING));
     }
 
+#if PROJECT_ENABLE_STDOUT
     printf("Initialized environmental target %f\n", geometric_area);
+#endif
 
 
     // Initializing the PRNGs
@@ -117,7 +119,9 @@ ExpManager::ExpManager(int grid_height, int grid_width, int seed, double mutatio
         r_compare = round((random_organism->metaerror - geometric_area) * 1E10) / 1E10;
     }
 
+#if PROJECT_ENABLE_STDOUT
     printf("Populating the environment\n");
+#endif
 
     // Create a population of clones based on the randomly generated organism
     for (int indiv_id = 0; indiv_id < nb_indivs_; indiv_id++) {
@@ -145,7 +149,9 @@ ExpManager::ExpManager(int time) {
         geometric_area += ((fabs(target[i]) + fabs(target[i + 1])) / (2 * (double) FUZZY_SAMPLING));
     }
 
+#if PROJECT_ENABLE_STDOUT
     printf("Initialized environmental target %f\n", geometric_area);
+#endif
 
     dna_mutator_array_ = new DnaMutator *[nb_indivs_];
     for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
@@ -429,14 +435,18 @@ void ExpManager::run_evolution(int nb_gen) {
     stats_best = new Stats(AeTime::time(), true);
     stats_mean = new Stats(AeTime::time(), false);
 
+#if PROJECT_ENABLE_STDOUT
     printf("Running evolution from %d to %d\n", AeTime::time(), AeTime::time() + nb_gen);
+#endif
 
     for (int gen = 0; gen < nb_gen; gen++) {
         AeTime::plusplus();
 
         TIMESTAMP(1, run_a_step();)
 
+#if PROJECT_ENABLE_STDOUT
         printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
+#endif
         FLUSH_TRACES(gen)
 
         for (int indiv_id = 0; indiv_id < nb_indivs_; ++indiv_id) {
@@ -446,7 +456,9 @@ void ExpManager::run_evolution(int nb_gen) {
 
         if (AeTime::time() % backup_step_ == 0) {
             save(AeTime::time());
-            cout << "Backup for generation " << AeTime::time() << " done !" << endl;
+#if PROJECT_ENABLE_STDOUT
+            printf("Backup for generation %ud done!\n", AeTime::time());
+#endif
         }
     }
     STOP_TRACER

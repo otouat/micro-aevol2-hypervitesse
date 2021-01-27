@@ -3,6 +3,10 @@ project(pdc_mini_aevol)
 
 set(CMAKE_CXX_STANDARD 14)
 
+add_compile_definitions(
+        PROJECT_ENABLE_STDOUT=0
+)
+
 if ( DO_TRACES )
     add_definitions(-DTRACES)
     message( STATUS "Traces are activated" )
