@@ -40,8 +40,6 @@
 #include "MutationEvent.h"
 #include "aevol_constants.h"
 
-#define PROJECT_USE_REMAINDER_FOR_MODULO 1
-
 /**
  * Class that implements an organism and its related DNAs, RNAs, Protein and Phenotype
  */

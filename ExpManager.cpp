@@ -377,7 +377,9 @@ void ExpManager::prepare_mutation(int indiv_id) const {
  *
  */
 void ExpManager::run_a_step() {
+#if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
     index_of_organisms_which_has_mutated.clear();
+#endif
 
     // Running the simulation process for each organism
 #pragma omp parallel for
@@ -454,7 +456,9 @@ void ExpManager::run_evolution(int nb_gen) {
     for (int gen = 0; gen < nb_gen; gen++) {
         AeTime::plusplus();
         TIMESTAMP(1, run_a_step(););
+#if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
         sizesOfMutatedOrganismsLists.push_back(index_of_organisms_which_has_mutated.size());
+#endif
 #if PROJECT_ENABLE_STDOUT
         printf("Generation %d : Best individual fitness %e\n", AeTime::time(), best_indiv->fitness);
 #endif
@@ -474,6 +478,8 @@ void ExpManager::run_evolution(int nb_gen) {
 
 
     }
+
+#if PROJECT_USE_INDEX_OF_MUTATED_ORGANISMS
     printf(
             "%f\n",
             float(
@@ -485,6 +491,7 @@ void ExpManager::run_evolution(int nb_gen) {
             )
             /
             float(sizesOfMutatedOrganismsLists.size()));
+#endif
     STOP_TRACER
 }
 
